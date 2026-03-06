@@ -165,3 +165,7 @@ Open `http://localhost:3000`.
 - Server routes use Supabase service-role client only on trusted server side.
 - User-facing queries rely on RLS-protected tables.
 
+Dans Supabase Dashboard -> Auth -> URL Configuration:
+
+Site URL: http://172.27.54.106:3000
+Redirect URLs: ajoute http://172.27.54.106:3000/auth/callback
