@@ -197,11 +197,29 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: `Adaptive challenge update failed: ${challengeBandError.message}` }, { status: 500 });
   }
 
+  const { data: retentionState, error: retentionError } = await supabase.rpc("fn_refresh_retention_state", {
+    p_user_id: user.id
+  });
+
+  if (retentionError) {
+    return NextResponse.json({ error: `Retention state update failed: ${retentionError.message}` }, { status: 500 });
+  }
+
+  const { data: completedChains, error: chainSyncError } = await supabase.rpc("fn_sync_achievement_chains", {
+    p_user_id: user.id
+  });
+
+  if (chainSyncError) {
+    return NextResponse.json({ error: `Achievement chain sync failed: ${chainSyncError.message}` }, { status: 500 });
+  }
+
   const rewardSummary = {
     ...(rewards as Record<string, unknown>),
     attendanceXp: attendanceXp ?? 0,
     momentumScore: momentumScore ?? 0,
-    challengeBand: challengeBand ?? "balanced"
+    challengeBand: challengeBand ?? "balanced",
+    retention: retentionState,
+    completedChains: completedChains ?? 0
   };
 
   await supabase.from("product_events").insert({

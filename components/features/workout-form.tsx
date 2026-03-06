@@ -23,6 +23,8 @@ interface WorkoutRewards {
   attendanceXp?: number;
   momentumScore?: number;
   challengeBand?: string;
+  completedChains?: number;
+  retention?: { burnoutRisk?: number; varietyScore?: number; advice?: string };
   loot?: { awarded?: boolean; itemName?: string; rarity?: string; quantity?: number };
 }
 
@@ -89,6 +91,14 @@ export function WorkoutForm() {
             <p>New Level: {victory.newLevel}</p>
             <p>Momentum: {(victory.momentumScore ?? 0).toFixed(1)}</p>
             <p>Challenge Band: {victory.challengeBand ?? "balanced"}</p>
+            <p>Completed Chain Rewards Ready: {victory.completedChains ?? 0}</p>
+            {victory.retention?.burnoutRisk !== undefined ? (
+              <p>Burnout Risk: {Number(victory.retention.burnoutRisk ?? 0).toFixed(1)}%</p>
+            ) : null}
+            {victory.retention?.varietyScore !== undefined ? (
+              <p>Variety Score: {Number(victory.retention.varietyScore ?? 0).toFixed(1)}%</p>
+            ) : null}
+            {victory.retention?.advice ? <p>Coach Advice: {victory.retention.advice}</p> : null}
             <p>{victory.leveledUp ? "Level Up Unlocked" : "Progress Recorded"}</p>
             {victory.loot?.awarded ? (
               <p>

@@ -65,6 +65,7 @@ leveling/
 			001_init.sql
 			002_growth_loops.sql
 				003_behavior_progression.sql
+				004_retention_engine.sql
 	.env.example
 	.eslintrc.json
 	middleware.ts
@@ -99,6 +100,7 @@ SUPABASE_SERVICE_ROLE_KEY=...
 - Run `supabase/migrations/001_init.sql`.
 - Then run `supabase/migrations/002_growth_loops.sql`.
 - Then run `supabase/migrations/003_behavior_progression.sql`.
+- Then run `supabase/migrations/004_retention_engine.sql`.
 
 This migration includes:
 
@@ -112,6 +114,8 @@ This migration includes:
 - Attendance floor XP, momentum score, adaptive challenge bands
 - Weekly boss modifiers, boss progress meter, weekly recap RPC
 - Micro quest assignment and claim RPC
+- Burnout prevention and retention-state scoring (phase, risk, variety, advice)
+- Achievement chains for 7/21/60/120 workout consistency milestones
 
 ## Backend Logic
 
@@ -149,6 +153,8 @@ API routes:
 - `POST /api/squads/join`
 - `POST /api/micro-quests/:userMicroQuestId/claim`
 - `GET /api/retention/weekly-recap`
+- `GET /api/retention/state`
+- `POST /api/achievement-chains/:userChainProgressId/claim`
 
 ## Frontend Pages
 
@@ -169,8 +175,10 @@ API routes:
 - `StatCard`: reusable summary stat component for dashboard/profile.
 - `DailyOpsList`: daily claim loop integrated into dashboard.
 - `WeeklyChallenges`: weekly progression and claim flow.
+- `AchievementChainList`: long-horizon consistency chain progression and claims.
 - `ShareStudio`: generation of power/muscle/achievement share cards.
 - `LeaderboardTable`: social competition ranking widget.
+- `RetentionPanel`: phase-aware burnout and variety guidance.
 
 ## Run Locally
 

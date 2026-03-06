@@ -4,6 +4,7 @@ import { StatCard } from "@/components/features/stat-card";
 import { MuscleGrid } from "@/components/features/muscle-grid";
 import { DailyOpsList } from "@/components/features/daily-ops-list";
 import { MicroQuestList } from "@/components/features/micro-quest-list";
+import { RetentionPanel } from "@/components/features/retention-panel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -144,6 +145,17 @@ export default async function DashboardPage() {
             <p>Top Muscle: {weeklyRecap?.bestMuscle ?? "core"}</p>
           </CardContent>
         </Card>
+      </section>
+
+      <section>
+        <RetentionPanel
+          data={{
+            journey_phase: progress?.journey_phase,
+            burnout_risk: Number(progress?.burnout_risk ?? 0),
+            variety_score: Number(progress?.variety_score ?? 0),
+            recovery_advice: progress?.recovery_advice
+          }}
+        />
       </section>
 
       <section>
