@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient as createServer } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { MUSCLE_GROUPS } from "@/lib/constants";
 
 const exerciseInput = z.object({
   name: z.string().min(1),
@@ -34,6 +35,46 @@ export async function POST(request: Request) {
   const { notes, exercises } = parsed.data;
   const admin = createAdminClient();
 
+  // Self-heal user bootstrap state in case signup callback/bootstrap was skipped.
+  const { error: userUpsertError } = await admin.from("users").upsert(
+    {
+      id: user.id,
+      username: (user.user_metadata?.username as string) || user.email?.split("@")[0] || `hunter_${user.id.slice(0, 8)}`,
+      display_name: user.email
+    },
+    { onConflict: "id" }
+  );
+
+  if (userUpsertError) {
+    return NextResponse.json({ error: `Profile bootstrap failed: ${userUpsertError.message}` }, { status: 500 });
+  }
+
+  const { error: progressUpsertError } = await admin
+    .from("user_progress")
+    .upsert({ user_id: user.id }, { onConflict: "user_id" });
+
+  if (progressUpsertError) {
+    return NextResponse.json({ error: `Progress bootstrap failed: ${progressUpsertError.message}` }, { status: 500 });
+  }
+
+  const { error: muscleUpsertError } = await admin.from("muscle_stats").upsert(
+    MUSCLE_GROUPS.map((group) => ({
+      user_id: user.id,
+      muscle_group: group
+    })),
+    { onConflict: "user_id,muscle_group" }
+  );
+
+  if (muscleUpsertError) {
+    return NextResponse.json({ error: `Muscle bootstrap failed: ${muscleUpsertError.message}` }, { status: 500 });
+  }
+
+  const { error: contentBootstrapError } = await admin.rpc("fn_grant_initial_content", { p_user_id: user.id });
+
+  if (contentBootstrapError) {
+    return NextResponse.json({ error: `Initial content bootstrap failed: ${contentBootstrapError.message}` }, { status: 500 });
+  }
+
   const { data: workout, error: workoutError } = await admin
     .from("workouts")
     .insert({
@@ -47,7 +88,7 @@ export async function POST(request: Request) {
     .single();
 
   if (workoutError || !workout) {
-    return NextResponse.json({ error: "Workout creation failed" }, { status: 500 });
+    return NextResponse.json({ error: workoutError?.message || "Workout creation failed" }, { status: 500 });
   }
 
   for (let idx = 0; idx < exercises.length; idx += 1) {
@@ -74,7 +115,7 @@ export async function POST(request: Request) {
         .single();
 
       if (insertExerciseError || !createdExercise) {
-        return NextResponse.json({ error: "Exercise creation failed" }, { status: 500 });
+        return NextResponse.json({ error: insertExerciseError?.message || "Exercise creation failed" }, { status: 500 });
       }
 
       exerciseId = createdExercise.id;
@@ -91,7 +132,7 @@ export async function POST(request: Request) {
       .single();
 
     if (workoutExerciseError || !workoutExercise) {
-      return NextResponse.json({ error: "Workout exercise insert failed" }, { status: 500 });
+      return NextResponse.json({ error: workoutExerciseError?.message || "Workout exercise insert failed" }, { status: 500 });
     }
 
     const setRows = Array.from({ length: row.sets }).map((_, setIndex) => ({
@@ -106,7 +147,7 @@ export async function POST(request: Request) {
     const { error: setError } = await admin.from("sets").insert(setRows);
 
     if (setError) {
-      return NextResponse.json({ error: "Set insert failed" }, { status: 500 });
+      return NextResponse.json({ error: setError.message || "Set insert failed" }, { status: 500 });
     }
   }
 
@@ -116,7 +157,7 @@ export async function POST(request: Request) {
   });
 
   if (rewardsError) {
-    return NextResponse.json({ error: "Reward pipeline failed" }, { status: 500 });
+    return NextResponse.json({ error: `Reward pipeline failed: ${rewardsError.message}` }, { status: 500 });
   }
 
   return NextResponse.json({ ok: true, rewards, workoutId: workout.id });
