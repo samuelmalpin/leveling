@@ -1,6 +1,12 @@
 import { requireUser } from "@/lib/auth/require-user";
 import { BossList } from "@/components/features/boss-list";
 
+type BossModifierRow = {
+  boss_id: string;
+  modifier_name: string;
+  modifier_description: string | null;
+};
+
 export default async function BossesPage() {
   const { supabase, user } = await requireUser();
   const today = new Date().toISOString().slice(0, 10);
@@ -20,7 +26,10 @@ export default async function BossesPage() {
   ]);
 
   const weeklyModifiers = Object.fromEntries(
-    (modifiers ?? []).map((row) => [row.boss_id, { modifier_name: row.modifier_name, modifier_description: row.modifier_description }])
+    ((modifiers ?? []) as BossModifierRow[]).map((row) => [
+      row.boss_id,
+      { modifier_name: row.modifier_name, modifier_description: row.modifier_description }
+    ])
   );
 
   return (

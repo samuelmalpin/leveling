@@ -9,7 +9,7 @@ type BossRow = {
   status: string;
   attempt_count: number;
   best_score: number | null;
-  progress_meter: number;
+  progress_meter: number | null;
   bosses: { id: string; name: string; description: string; reward_xp: number; difficulty: number } | null;
 };
 
@@ -71,7 +71,7 @@ export function BossList({
                 <p>Status: {row.status}</p>
                 <p>Attempts: {row.attempt_count}</p>
                 <p>Best Score: {row.best_score ?? 0}</p>
-                <p>Boss Meter: {row.progress_meter.toFixed(1)}%</p>
+                <p>Boss Meter: {(row.progress_meter ?? 0).toFixed(1)}%</p>
                 <p>Reward: {row.bosses?.reward_xp ?? 0} XP</p>
                 <Button size="sm" onClick={() => attemptBoss(row.id)} disabled={row.status === "locked" || row.status === "defeated"}>
                   {row.status === "defeated" ? "Defeated" : "Attempt"}

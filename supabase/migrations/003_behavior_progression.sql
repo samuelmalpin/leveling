@@ -213,14 +213,15 @@ begin
     raise exception 'Micro quest not found';
   end if;
 
-  if q_status not in ('active', 'completed') then
+  if q_status <> 'completed' then
     raise exception 'Micro quest is not claimable';
   end if;
 
   update public.user_micro_quests
   set status = 'claimed',
       claimed_at = now()
-  where id = p_user_micro_quest_id;
+  where id = p_user_micro_quest_id
+    and status = 'completed';
 
   update public.user_progress up
   set xp_total = up.xp_total + reward_xp,
