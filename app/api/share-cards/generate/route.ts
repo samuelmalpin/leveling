@@ -38,5 +38,20 @@ export async function POST(request: Request) {
     }
   });
 
-  return NextResponse.json({ ok: true, data });
+  const generatedId = (data as { id?: string } | null)?.id;
+  if (!generatedId) {
+    return NextResponse.json({ ok: true, data });
+  }
+
+  const { data: persistedCard, error: persistedCardError } = await supabase
+    .from("share_cards")
+    .select("id, card_type, title, payload, created_at")
+    .eq("id", generatedId)
+    .single();
+
+  if (persistedCardError) {
+    return NextResponse.json({ ok: true, data });
+  }
+
+  return NextResponse.json({ ok: true, data: persistedCard });
 }

@@ -9,7 +9,7 @@ type ShareCard = {
   card_type: "power_scan" | "muscle_rank" | "achievement";
   title: string;
   payload: Record<string, unknown>;
-  created_at: string;
+  created_at?: string;
 };
 
 export function ShareStudio({ initialCards }: { initialCards: ShareCard[] }) {
@@ -17,7 +17,10 @@ export function ShareStudio({ initialCards }: { initialCards: ShareCard[] }) {
   const [loadingType, setLoadingType] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
-  const formatTimestamp = (value: string) => (value.includes("T") ? value.replace("T", " ").slice(0, 16) : value);
+  const formatTimestamp = (value?: string) => {
+    if (!value) return "unknown-time";
+    return value.includes("T") ? value.replace("T", " ").slice(0, 16) : value;
+  };
 
   const generate = async (cardType: ShareCard["card_type"]) => {
     setLoadingType(cardType);
