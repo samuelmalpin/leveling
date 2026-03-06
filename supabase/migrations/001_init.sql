@@ -550,6 +550,10 @@ drop policy if exists "users_update_self" on public.users;
 create policy "users_update_self" on public.users
 for update using (auth.uid() = id);
 
+drop policy if exists "users_insert_self" on public.users;
+create policy "users_insert_self" on public.users
+for insert with check (auth.uid() = id);
+
 drop policy if exists "workouts_own" on public.workouts;
 create policy "workouts_own" on public.workouts
 for all using (auth.uid() = user_id) with check (auth.uid() = user_id);

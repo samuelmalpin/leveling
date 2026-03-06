@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient as createServer } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { MUSCLE_GROUPS } from "@/lib/constants";
 
 const exerciseInput = z.object({
@@ -33,14 +32,16 @@ export async function POST(request: Request) {
   }
 
   const { notes, exercises } = parsed.data;
-  const admin = createAdminClient();
-
   // Self-heal user bootstrap state in case signup callback/bootstrap was skipped.
-  const { error: userUpsertError } = await admin.from("users").upsert(
+  const profilePayload = {
+    id: user.id,
+    username: (user.user_metadata?.username as string) || user.email?.split("@")[0] || `hunter_${user.id.slice(0, 8)}`,
+    display_name: user.email
+  };
+
+  const { error: userUpsertError } = await supabase.from("users").upsert(
     {
-      id: user.id,
-      username: (user.user_metadata?.username as string) || user.email?.split("@")[0] || `hunter_${user.id.slice(0, 8)}`,
-      display_name: user.email
+      ...profilePayload
     },
     { onConflict: "id" }
   );
@@ -49,7 +50,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: `Profile bootstrap failed: ${userUpsertError.message}` }, { status: 500 });
   }
 
-  const { error: progressUpsertError } = await admin
+  const { error: progressUpsertError } = await supabase
     .from("user_progress")
     .upsert({ user_id: user.id }, { onConflict: "user_id" });
 
@@ -57,7 +58,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: `Progress bootstrap failed: ${progressUpsertError.message}` }, { status: 500 });
   }
 
-  const { error: muscleUpsertError } = await admin.from("muscle_stats").upsert(
+  const { error: muscleUpsertError } = await supabase.from("muscle_stats").upsert(
     MUSCLE_GROUPS.map((group) => ({
       user_id: user.id,
       muscle_group: group
@@ -69,13 +70,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: `Muscle bootstrap failed: ${muscleUpsertError.message}` }, { status: 500 });
   }
 
-  const { error: contentBootstrapError } = await admin.rpc("fn_grant_initial_content", { p_user_id: user.id });
+  const { error: contentBootstrapError } = await supabase.rpc("fn_grant_initial_content", { p_user_id: user.id });
 
   if (contentBootstrapError) {
     return NextResponse.json({ error: `Initial content bootstrap failed: ${contentBootstrapError.message}` }, { status: 500 });
   }
 
-  const { data: workout, error: workoutError } = await admin
+  const { data: workout, error: workoutError } = await supabase
     .from("workouts")
     .insert({
       user_id: user.id,
@@ -94,7 +95,7 @@ export async function POST(request: Request) {
   for (let idx = 0; idx < exercises.length; idx += 1) {
     const row = exercises[idx];
 
-    const { data: exerciseCatalog } = await admin
+    const { data: exerciseCatalog } = await supabase
       .from("exercises")
       .select("id")
       .eq("name", row.name)
@@ -103,25 +104,13 @@ export async function POST(request: Request) {
     let exerciseId = exerciseCatalog?.id as string | undefined;
 
     if (!exerciseId) {
-      const { data: createdExercise, error: insertExerciseError } = await admin
-        .from("exercises")
-        .insert({
-          name: row.name,
-          category: "strength",
-          primary_muscle: "chest",
-          secondary_muscles: ["arms"]
-        })
-        .select("id")
-        .single();
-
-      if (insertExerciseError || !createdExercise) {
-        return NextResponse.json({ error: insertExerciseError?.message || "Exercise creation failed" }, { status: 500 });
-      }
-
-      exerciseId = createdExercise.id;
+      return NextResponse.json(
+        { error: `Unknown exercise: ${row.name}. Please use a seeded exercise from the catalog.` },
+        { status: 400 }
+      );
     }
 
-    const { data: workoutExercise, error: workoutExerciseError } = await admin
+    const { data: workoutExercise, error: workoutExerciseError } = await supabase
       .from("workout_exercises")
       .insert({
         workout_id: workout.id,
@@ -144,14 +133,14 @@ export async function POST(request: Request) {
       is_warmup: false
     }));
 
-    const { error: setError } = await admin.from("sets").insert(setRows);
+    const { error: setError } = await supabase.from("sets").insert(setRows);
 
     if (setError) {
       return NextResponse.json({ error: setError.message || "Set insert failed" }, { status: 500 });
     }
   }
 
-  const { data: rewards, error: rewardsError } = await admin.rpc("fn_apply_workout_rewards", {
+  const { data: rewards, error: rewardsError } = await supabase.rpc("fn_apply_workout_rewards", {
     p_user_id: user.id,
     p_workout_id: workout.id
   });
