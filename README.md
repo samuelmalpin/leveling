@@ -64,8 +64,8 @@ leveling/
 		migrations/
 			001_init.sql
 			002_growth_loops.sql
-				003_behavior_progression.sql
-				004_retention_engine.sql
+			003_behavior_progression.sql
+			004_retention_engine.sql
 	.env.example
 	.eslintrc.json
 	middleware.ts
@@ -155,6 +155,7 @@ API routes:
 - `GET /api/retention/weekly-recap`
 - `GET /api/retention/state`
 - `POST /api/achievement-chains/:userChainProgressId/claim`
+- `POST /api/recovery-quests/claim`
 
 ## Frontend Pages
 
