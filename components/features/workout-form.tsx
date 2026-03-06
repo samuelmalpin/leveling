@@ -20,6 +20,9 @@ interface WorkoutRewards {
   streakDays: number;
   leveledUp: boolean;
   newLevel: number;
+  attendanceXp?: number;
+  momentumScore?: number;
+  challengeBand?: string;
   loot?: { awarded?: boolean; itemName?: string; rarity?: string; quantity?: number };
 }
 
@@ -81,8 +84,11 @@ export function WorkoutForm() {
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             <p>XP Earned: {victory.xp}</p>
+            <p>Attendance XP: {victory.attendanceXp ?? 0}</p>
             <p>Streak: {victory.streakDays} days</p>
             <p>New Level: {victory.newLevel}</p>
+            <p>Momentum: {(victory.momentumScore ?? 0).toFixed(1)}</p>
+            <p>Challenge Band: {victory.challengeBand ?? "balanced"}</p>
             <p>{victory.leveledUp ? "Level Up Unlocked" : "Progress Recorded"}</p>
             {victory.loot?.awarded ? (
               <p>

@@ -149,15 +149,70 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: `Reward pipeline failed: ${rewardsError.message}` }, { status: 500 });
   }
 
+  const today = new Date().toISOString().slice(0, 10);
+
+  const { data: attendanceXp, error: attendanceError } = await supabase.rpc("fn_award_attendance_floor", {
+    p_user_id: user.id,
+    p_workout_id: workout.id,
+    p_workout_date: today
+  });
+
+  if (attendanceError) {
+    return NextResponse.json({ error: `Attendance reward failed: ${attendanceError.message}` }, { status: 500 });
+  }
+
+  const { error: assignMicroQuestError } = await supabase.rpc("fn_assign_micro_quest", {
+    p_user_id: user.id,
+    p_for_date: today
+  });
+
+  if (assignMicroQuestError) {
+    return NextResponse.json({ error: `Micro quest assignment failed: ${assignMicroQuestError.message}` }, { status: 500 });
+  }
+
+  const { error: completeMicroQuestError } = await supabase
+    .from("user_micro_quests")
+    .update({ status: "completed" })
+    .eq("user_id", user.id)
+    .eq("assigned_date", today)
+    .eq("status", "active");
+
+  if (completeMicroQuestError) {
+    return NextResponse.json({ error: `Micro quest completion failed: ${completeMicroQuestError.message}` }, { status: 500 });
+  }
+
+  const { data: momentumScore, error: momentumError } = await supabase.rpc("fn_refresh_momentum_score", {
+    p_user_id: user.id
+  });
+
+  if (momentumError) {
+    return NextResponse.json({ error: `Momentum update failed: ${momentumError.message}` }, { status: 500 });
+  }
+
+  const { data: challengeBand, error: challengeBandError } = await supabase.rpc("fn_apply_adaptive_challenge_band", {
+    p_user_id: user.id
+  });
+
+  if (challengeBandError) {
+    return NextResponse.json({ error: `Adaptive challenge update failed: ${challengeBandError.message}` }, { status: 500 });
+  }
+
+  const rewardSummary = {
+    ...(rewards as Record<string, unknown>),
+    attendanceXp: attendanceXp ?? 0,
+    momentumScore: momentumScore ?? 0,
+    challengeBand: challengeBand ?? "balanced"
+  };
+
   await supabase.from("product_events").insert({
     user_id: user.id,
     event_name: "workout_completed",
     payload: {
       workoutId: workout.id,
       exercises: exercises.length,
-      reward: rewards
+      reward: rewardSummary
     }
   });
 
-  return NextResponse.json({ ok: true, rewards, workoutId: workout.id });
+  return NextResponse.json({ ok: true, rewards: rewardSummary, workoutId: workout.id });
 }

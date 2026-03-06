@@ -64,6 +64,7 @@ leveling/
 		migrations/
 			001_init.sql
 			002_growth_loops.sql
+				003_behavior_progression.sql
 	.env.example
 	.eslintrc.json
 	middleware.ts
@@ -97,6 +98,7 @@ SUPABASE_SERVICE_ROLE_KEY=...
 - Open Supabase SQL editor.
 - Run `supabase/migrations/001_init.sql`.
 - Then run `supabase/migrations/002_growth_loops.sql`.
+- Then run `supabase/migrations/003_behavior_progression.sql`.
 
 This migration includes:
 
@@ -107,6 +109,9 @@ This migration includes:
 - RPC functions for rewards and progression
 - Loot, daily ops, weekly challenges, seasons, social tables
 - Share card generation and weekly claim RPCs
+- Attendance floor XP, momentum score, adaptive challenge bands
+- Weekly boss modifiers, boss progress meter, weekly recap RPC
+- Micro quest assignment and claim RPC
 
 ## Backend Logic
 
@@ -142,6 +147,8 @@ API routes:
 - `GET /api/share-cards`
 - `POST /api/squads/create`
 - `POST /api/squads/join`
+- `POST /api/micro-quests/:userMicroQuestId/claim`
+- `GET /api/retention/weekly-recap`
 
 ## Frontend Pages
 

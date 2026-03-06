@@ -3,17 +3,31 @@ import { BossList } from "@/components/features/boss-list";
 
 export default async function BossesPage() {
   const { supabase, user } = await requireUser();
-  const { data } = await supabase
-    .from("boss_progress")
-    .select("id, status, attempt_count, best_score, bosses(name, description, reward_xp, difficulty)")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
+  const today = new Date().toISOString().slice(0, 10);
+
+  const [{ data: rows }, { data: modifiers }] = await Promise.all([
+    supabase
+      .from("boss_progress")
+      .select("id, status, attempt_count, best_score, progress_meter, bosses(id, name, description, reward_xp, difficulty)")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("boss_weekly_modifiers")
+      .select("boss_id, modifier_name, modifier_description")
+      .lte("week_start", today)
+      .gte("week_end", today)
+      .eq("is_active", true)
+  ]);
+
+  const weeklyModifiers = Object.fromEntries(
+    (modifiers ?? []).map((row) => [row.boss_id, { modifier_name: row.modifier_name, modifier_description: row.modifier_description }])
+  );
 
   return (
     <div className="space-y-3">
       <h2 className="text-xl font-semibold">Boss Challenges</h2>
       <p className="text-sm text-mutedForeground">Milestone combat checks for progression rewards.</p>
-      <BossList initialBosses={(data ?? []) as never[]} />
+      <BossList initialBosses={(rows ?? []) as never[]} weeklyModifiers={weeklyModifiers} />
     </div>
   );
 }

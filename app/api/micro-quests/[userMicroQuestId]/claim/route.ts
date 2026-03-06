@@ -3,10 +3,11 @@ import { createClient as createServer } from "@/lib/supabase/server";
 
 export async function POST(
   _: Request,
-  { params }: { params: Promise<{ bossProgressId: string }> }
+  { params }: { params: Promise<{ userMicroQuestId: string }> }
 ) {
-  const { bossProgressId } = await params;
+  const { userMicroQuestId } = await params;
   const supabase = await createServer();
+
   const {
     data: { user }
   } = await supabase.auth.getUser();
@@ -15,23 +16,14 @@ export async function POST(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { data, error } = await supabase.rpc("fn_attempt_boss", {
+  const { data, error } = await supabase.rpc("fn_claim_micro_quest", {
     p_user_id: user.id,
-    p_boss_progress_id: bossProgressId
+    p_user_micro_quest_id: userMicroQuestId
   });
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
-
-  await supabase.from("product_events").insert({
-    user_id: user.id,
-    event_name: "boss_attempted",
-    payload: {
-      bossProgressId,
-      result: data
-    }
-  });
 
   return NextResponse.json({ ok: true, ...(data as object) });
 }
