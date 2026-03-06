@@ -27,10 +27,12 @@ export function AuthForm({ mode }: AuthFormProps) {
     const supabase = createClient();
 
     if (mode === "signup") {
+      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
       const { data, error: signError } = await supabase.auth.signUp({
         email,
         password,
         options: {
+          emailRedirectTo: `${baseUrl}/auth/callback`,
           data: {
             username
           }
