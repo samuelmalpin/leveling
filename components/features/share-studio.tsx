@@ -15,6 +15,9 @@ type ShareCard = {
 export function ShareStudio({ initialCards }: { initialCards: ShareCard[] }) {
   const [cards, setCards] = useState(initialCards);
   const [loadingType, setLoadingType] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+
+  const formatTimestamp = (value: string) => (value.includes("T") ? value.replace("T", " ").slice(0, 16) : value);
 
   const generate = async (cardType: ShareCard["card_type"]) => {
     setLoadingType(cardType);
@@ -27,7 +30,7 @@ export function ShareStudio({ initialCards }: { initialCards: ShareCard[] }) {
     if (response.ok) {
       const payload = (await response.json()) as { data: ShareCard };
       if (payload.data) {
-        setCards((prev) => [payload.data, ...prev]);
+        setCards((prev: ShareCard[]) => [payload.data, ...prev]);
       }
     }
 
@@ -35,8 +38,19 @@ export function ShareStudio({ initialCards }: { initialCards: ShareCard[] }) {
   };
 
   const copySummary = async (card: ShareCard) => {
-    const summary = `${card.title} | ${card.card_type} | ${new Date(card.created_at).toLocaleString()}`;
-    await navigator.clipboard.writeText(summary);
+    const summary = `${card.title} | ${card.card_type} | ${formatTimestamp(card.created_at)}`;
+
+    if (typeof navigator === "undefined" || !navigator.clipboard?.writeText) {
+      setMessage("Copy to clipboard is not supported in this browser");
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(summary);
+      setMessage("Share text copied");
+    } catch {
+      setMessage("Copy failed. Please copy manually.");
+    }
   };
 
   return (
@@ -61,11 +75,11 @@ export function ShareStudio({ initialCards }: { initialCards: ShareCard[] }) {
           {cards.length === 0 ? (
             <p className="text-sm text-mutedForeground">No cards generated yet.</p>
           ) : (
-            cards.map((card) => (
+            cards.map((card: ShareCard) => (
               <div key={card.id} className="rounded-md border border-border p-3 text-sm">
                 <p className="font-medium">{card.title}</p>
                 <p className="text-xs uppercase text-mutedForeground">{card.card_type}</p>
-                <p className="mt-1 text-xs text-mutedForeground">{new Date(card.created_at).toLocaleString()}</p>
+                <p className="mt-1 text-xs text-mutedForeground">{formatTimestamp(card.created_at)}</p>
                 <Button className="mt-2" size="sm" variant="outline" onClick={() => copySummary(card)}>
                   Copy Share Text
                 </Button>
@@ -73,6 +87,7 @@ export function ShareStudio({ initialCards }: { initialCards: ShareCard[] }) {
             ))
           )}
         </div>
+        {message ? <p className="text-xs text-mutedForeground">{message}</p> : null}
       </CardContent>
     </Card>
   );

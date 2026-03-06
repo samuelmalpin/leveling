@@ -29,12 +29,19 @@ export function WeeklyChallenges({ initialRows }: { initialRows: WeeklyChallenge
   const [rows, setRows] = useState(initialRows);
   const [claimingId, setClaimingId] = useState<string | null>(null);
 
+  const formatDate = (value: string | undefined) => {
+    if (!value) return "-";
+    return value.includes("T") ? value.slice(0, 10) : value;
+  };
+
   const claim = async (id: string) => {
     setClaimingId(id);
     const response = await fetch(`/api/weekly-challenges/${id}/claim`, { method: "POST" });
 
     if (response.ok) {
-      setRows((prev) => prev.map((r) => (r.id === id ? { ...r, status: "claimed" } : r)));
+      setRows((prev: WeeklyChallengeRow[]) =>
+        prev.map((r: WeeklyChallengeRow) => (r.id === id ? { ...r, status: "claimed" } : r))
+      );
     }
 
     setClaimingId(null);
@@ -55,7 +62,7 @@ export function WeeklyChallenges({ initialRows }: { initialRows: WeeklyChallenge
 
   return (
     <div className="space-y-4">
-      {rows.map((row) => {
+      {rows.map((row: WeeklyChallengeRow) => {
         const challenge = Array.isArray(row.weekly_challenges) ? row.weekly_challenges[0] : row.weekly_challenges;
         const target = challenge?.target_points ?? 1;
         const pct = Math.min((row.points / target) * 100, 100);
@@ -70,7 +77,7 @@ export function WeeklyChallenges({ initialRows }: { initialRows: WeeklyChallenge
               <p className="text-xs text-mutedForeground">
                 {row.points}/{target} points • Reward: {challenge?.reward_xp ?? 0} XP
               </p>
-              <p className="text-xs text-mutedForeground">Ends: {challenge?.week_end ? new Date(challenge.week_end).toLocaleDateString() : "-"}</p>
+              <p className="text-xs text-mutedForeground">Ends: {formatDate(challenge?.week_end)}</p>
               {row.status === "completed" ? (
                 <Button size="sm" onClick={() => claim(row.id)} disabled={claimingId === row.id}>
                   {claimingId === row.id ? "Claiming..." : "Claim Weekly Reward"}

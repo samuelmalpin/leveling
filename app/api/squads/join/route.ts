@@ -21,6 +21,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 
+  const { error: profileError } = await supabase.from("users").upsert(
+    {
+      id: user.id,
+      username: (user.user_metadata?.username as string) || user.email?.split("@")[0] || `hunter_${user.id.slice(0, 8)}`,
+      display_name: user.email
+    },
+    { onConflict: "id" }
+  );
+
+  if (profileError) {
+    return NextResponse.json({ error: `Unable to initialize profile: ${profileError.message}` }, { status: 400 });
+  }
+
   const inviteCode = parsed.data.inviteCode.toUpperCase();
 
   const { data: squad, error: squadError } = await supabase
