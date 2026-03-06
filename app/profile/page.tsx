@@ -1,11 +1,33 @@
 import { requireUser } from "@/lib/auth/require-user";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { InventoryList } from "@/components/features/inventory-list";
+import { ShareStudio } from "@/components/features/share-studio";
+
+type AchievementRow = {
+  id: string;
+  achievements: { name: string; code: string } | { name: string; code: string }[] | null;
+};
+
+type InventoryRow = {
+  id: string;
+  item_name: string;
+  rarity: string;
+  quantity: number;
+};
+
+type ShareCardRow = {
+  id: string;
+  card_type: "power_scan" | "muscle_rank" | "achievement";
+  title: string;
+  payload: Record<string, unknown>;
+  created_at: string;
+};
 
 export default async function ProfilePage() {
   const { supabase, user } = await requireUser();
 
-  const [{ data: profile }, { data: progress }, { data: achievements }] = await Promise.all([
+  const [{ data: profile }, { data: progress }, { data: achievements }, { data: inventory }, { data: shareCards }] = await Promise.all([
     supabase.from("users").select("*").eq("id", user.id).single(),
     supabase.from("user_progress").select("*").eq("user_id", user.id).single(),
     supabase
@@ -13,6 +35,18 @@ export default async function ProfilePage() {
       .select("id, unlocked_at, achievements(name, code)")
       .eq("user_id", user.id)
       .order("unlocked_at", { ascending: false })
+      .limit(12),
+    supabase
+      .from("user_inventory")
+      .select("id, item_name, rarity, quantity")
+      .eq("user_id", user.id)
+      .order("updated_at", { ascending: false })
+      .limit(20),
+    supabase
+      .from("share_cards")
+      .select("id, card_type, title, payload, created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
       .limit(12)
   ]);
 
@@ -39,7 +73,7 @@ export default async function ProfilePage() {
           {(achievements ?? []).length === 0 ? (
             <p className="text-sm text-mutedForeground">No achievements unlocked yet.</p>
           ) : (
-            achievements?.map((entry) => {
+            (achievements as AchievementRow[] | null)?.map((entry) => {
               const achievement = Array.isArray(entry.achievements)
                 ? (entry.achievements[0] as { name: string; code: string } | undefined)
                 : (entry.achievements as { name: string; code: string } | null);
@@ -52,6 +86,9 @@ export default async function ProfilePage() {
           )}
         </CardContent>
       </Card>
+
+      <InventoryList items={(inventory ?? []) as InventoryRow[]} />
+      <ShareStudio initialCards={(shareCards ?? []) as ShareCardRow[]} />
     </div>
   );
 }

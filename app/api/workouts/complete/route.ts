@@ -101,7 +101,7 @@ export async function POST(request: Request) {
       .eq("name", row.name)
       .maybeSingle();
 
-    let exerciseId = exerciseCatalog?.id as string | undefined;
+    const exerciseId = exerciseCatalog?.id as string | undefined;
 
     if (!exerciseId) {
       return NextResponse.json(
@@ -148,6 +148,16 @@ export async function POST(request: Request) {
   if (rewardsError) {
     return NextResponse.json({ error: `Reward pipeline failed: ${rewardsError.message}` }, { status: 500 });
   }
+
+  await supabase.from("product_events").insert({
+    user_id: user.id,
+    event_name: "workout_completed",
+    payload: {
+      workoutId: workout.id,
+      exercises: exercises.length,
+      reward: rewards
+    }
+  });
 
   return NextResponse.json({ ok: true, rewards, workoutId: workout.id });
 }

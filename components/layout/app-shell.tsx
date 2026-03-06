@@ -9,6 +9,7 @@ const navItems = [
   { href: "/workouts/new", label: "Log Workout" },
   { href: "/quests", label: "Quests" },
   { href: "/bosses", label: "Bosses" },
+  { href: "/social", label: "Social" },
   { href: "/profile", label: "Profile" }
 ];
 

@@ -205,6 +205,14 @@ begin
 end;
 $$;
 
+create or replace function public.fn_level_from_xp(total_xp numeric)
+returns int
+language sql
+immutable
+as $$
+  select public.fn_level_from_xp(floor(greatest(total_xp, 0))::bigint);
+$$;
+
 create or replace function public.fn_rank_from_level(p_level int)
 returns text
 language sql
@@ -303,7 +311,7 @@ declare
   workout_xp int := 0;
   total_volume numeric := 0;
   streak_multiplier numeric := 1;
-  streak_days int := 0;
+  v_streak_days int := 0;
   new_level int;
   old_level int;
   set_row record;
@@ -320,8 +328,8 @@ begin
 
   perform public.fn_update_streak(p_user_id, daily_date);
 
-  select streak_days into streak_days from public.user_progress where user_id = p_user_id;
-  streak_multiplier := least(1.20, 1 + (streak_days * 0.01));
+  select up.streak_days into v_streak_days from public.user_progress up where up.user_id = p_user_id;
+  streak_multiplier := least(1.20, 1 + (v_streak_days * 0.01));
 
   workout_xp := floor(workout_xp * streak_multiplier);
 
@@ -349,9 +357,9 @@ begin
     where e.id = set_row.exercise_id;
 
     update public.muscle_stats
-    set xp_total = xp_total + floor((set_row.reps * set_row.weight_kg) / 10 + 8),
-        level = public.fn_level_from_xp(xp_total + floor((set_row.reps * set_row.weight_kg) / 10 + 8)),
-        rank = public.fn_rank_from_level(public.fn_level_from_xp(xp_total + floor((set_row.reps * set_row.weight_kg) / 10 + 8))),
+    set xp_total = xp_total + floor((set_row.reps * set_row.weight_kg) / 10 + 8)::bigint,
+      level = public.fn_level_from_xp(xp_total + floor((set_row.reps * set_row.weight_kg) / 10 + 8)::bigint),
+      rank = public.fn_rank_from_level(public.fn_level_from_xp(xp_total + floor((set_row.reps * set_row.weight_kg) / 10 + 8)::bigint)),
         fatigue_score = least(100, fatigue_score + 5),
         last_trained_at = now(),
         updated_at = now()
@@ -360,9 +368,9 @@ begin
 
     if array_length(exercise_row.secondary_muscles, 1) is not null then
       update public.muscle_stats
-      set xp_total = xp_total + floor((set_row.reps * set_row.weight_kg) / 20 + 3),
-          level = public.fn_level_from_xp(xp_total + floor((set_row.reps * set_row.weight_kg) / 20 + 3)),
-          rank = public.fn_rank_from_level(public.fn_level_from_xp(xp_total + floor((set_row.reps * set_row.weight_kg) / 20 + 3))),
+        set xp_total = xp_total + floor((set_row.reps * set_row.weight_kg) / 20 + 3)::bigint,
+          level = public.fn_level_from_xp(xp_total + floor((set_row.reps * set_row.weight_kg) / 20 + 3)::bigint),
+          rank = public.fn_rank_from_level(public.fn_level_from_xp(xp_total + floor((set_row.reps * set_row.weight_kg) / 20 + 3)::bigint)),
           fatigue_score = least(100, fatigue_score + 2),
           updated_at = now()
       where user_id = p_user_id
@@ -375,7 +383,7 @@ begin
 
   return jsonb_build_object(
     'xp', workout_xp,
-    'streakDays', streak_days,
+    'streakDays', v_streak_days,
     'leveledUp', (new_level > old_level),
     'newLevel', new_level
   );

@@ -38,3 +38,29 @@ export interface QuestProgress {
   claimed_at: string | null;
   status: "active" | "completed" | "claimed";
 }
+
+export interface DailyQuest {
+  id: string;
+  user_id: string;
+  assigned_date: string;
+  progress_value: number;
+  status: "active" | "completed" | "claimed" | "expired";
+}
+
+export interface LootDrop {
+  id: string;
+  user_id: string;
+  source_type: "workout" | "quest" | "weekly" | "boss";
+  item_code: string;
+  item_name: string;
+  rarity: "common" | "rare" | "epic" | "legendary";
+  quantity: number;
+  created_at: string;
+}
+
+export interface SeasonProgress {
+  user_id: string;
+  season_id: string;
+  season_xp: number;
+  tier: number;
+}

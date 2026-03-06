@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,9 +15,19 @@ interface ExerciseInput {
   rpe: number;
 }
 
+interface WorkoutRewards {
+  xp: number;
+  streakDays: number;
+  leveledUp: boolean;
+  newLevel: number;
+  loot?: { awarded?: boolean; itemName?: string; rarity?: string; quantity?: number };
+}
+
 export function WorkoutForm() {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [victory, setVictory] = useState<WorkoutRewards | null>(null);
   const [note, setNote] = useState("");
   const [exercises, setExercises] = useState<ExerciseInput[]>([
     { name: "Barbell Bench Press", sets: 3, reps: 8, weightKg: 60, rpe: 8 }
@@ -31,9 +41,10 @@ export function WorkoutForm() {
     setExercises((prev) => prev.map((row, i) => (i === index ? { ...row, ...patch } : row)));
   };
 
-  const submit = async (e: React.FormEvent) => {
+  const submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSaving(true);
+    setError(null);
 
     const response = await fetch("/api/workouts/complete", {
       method: "POST",
@@ -47,13 +58,49 @@ export function WorkoutForm() {
     setSaving(false);
 
     if (response.ok) {
-      router.push("/");
-      router.refresh();
+      const payload = (await response.json()) as { rewards?: WorkoutRewards };
+      if (payload.rewards) {
+        setVictory(payload.rewards);
+      } else {
+        router.push("/");
+        router.refresh();
+      }
+      return;
     }
+
+    const payload = (await response.json().catch(() => ({ error: "Workout failed" }))) as { error?: string };
+    setError(payload.error ?? "Workout failed");
   };
 
   return (
     <form className="space-y-5" onSubmit={submit}>
+      {victory ? (
+        <Card className="border-primary/50">
+          <CardHeader>
+            <CardTitle>Victory Screen</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            <p>XP Earned: {victory.xp}</p>
+            <p>Streak: {victory.streakDays} days</p>
+            <p>New Level: {victory.newLevel}</p>
+            <p>{victory.leveledUp ? "Level Up Unlocked" : "Progress Recorded"}</p>
+            {victory.loot?.awarded ? (
+              <p>
+                Loot: {victory.loot.itemName} ({victory.loot.rarity}) x{victory.loot.quantity}
+              </p>
+            ) : (
+              <p>Loot: no drop this run</p>
+            )}
+            <div className="flex gap-2 pt-2">
+              <Button type="button" onClick={() => router.push("/")}>Back to Dashboard</Button>
+              <Button type="button" variant="secondary" onClick={() => setVictory(null)}>Log Another Workout</Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {error ? <p className="text-sm text-destructive">{error}</p> : null}
+
       <Card>
         <CardHeader>
           <CardTitle>Session Metadata</CardTitle>

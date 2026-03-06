@@ -63,6 +63,7 @@ leveling/
 	supabase/
 		migrations/
 			001_init.sql
+			002_growth_loops.sql
 	.env.example
 	.eslintrc.json
 	middleware.ts
@@ -95,6 +96,7 @@ SUPABASE_SERVICE_ROLE_KEY=...
 
 - Open Supabase SQL editor.
 - Run `supabase/migrations/001_init.sql`.
+- Then run `supabase/migrations/002_growth_loops.sql`.
 
 This migration includes:
 
@@ -103,6 +105,8 @@ This migration includes:
 - RLS policies
 - Seed data for exercises, quests, bosses, achievements
 - RPC functions for rewards and progression
+- Loot, daily ops, weekly challenges, seasons, social tables
+- Share card generation and weekly claim RPCs
 
 ## Backend Logic
 
@@ -132,6 +136,12 @@ API routes:
 - `POST /api/workouts/complete`
 - `POST /api/quests/:questProgressId/claim`
 - `POST /api/bosses/:bossProgressId/attempt`
+- `POST /api/daily-quests/:dailyQuestId/claim`
+- `POST /api/weekly-challenges/:userWeeklyProgressId/claim`
+- `POST /api/share-cards/generate`
+- `GET /api/share-cards`
+- `POST /api/squads/create`
+- `POST /api/squads/join`
 
 ## Frontend Pages
 
@@ -140,6 +150,7 @@ API routes:
 - `Profile` (`app/profile/page.tsx`): identity, progression summary, achievements.
 - `Quests` (`app/quests/page.tsx`): quest progress and reward claiming.
 - `Bosses` (`app/bosses/page.tsx`): challenge progression and attempts.
+- `Social` (`app/social/page.tsx`): leaderboard and squad controls.
 - `Login / Signup` (`app/login`, `app/signup`): Supabase auth flows.
 
 ## Example Components
@@ -149,6 +160,10 @@ API routes:
 - `QuestList`: progress bars and claim actions.
 - `BossList`: boss status, attempts, and challenge trigger.
 - `StatCard`: reusable summary stat component for dashboard/profile.
+- `DailyOpsList`: daily claim loop integrated into dashboard.
+- `WeeklyChallenges`: weekly progression and claim flow.
+- `ShareStudio`: generation of power/muscle/achievement share cards.
+- `LeaderboardTable`: social competition ranking widget.
 
 ## Run Locally
 
@@ -162,7 +177,7 @@ Open `http://localhost:3000`.
 ## Notes
 
 - Critical reward logic is in SQL RPC functions for anti-exploit consistency.
-- Server routes use Supabase service-role client only on trusted server side.
+- Server writes now use authenticated server client + RLS by default.
 - User-facing queries rely on RLS-protected tables.
 
 Dans Supabase Dashboard -> Auth -> URL Configuration:
