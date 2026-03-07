@@ -1,13 +1,14 @@
 export type MuscleGroup =
   | "chest"
+  | "biceps"
+  | "triceps"
+  | "abs"
   | "back"
   | "shoulders"
-  | "quads"
+  | "quadriceps"
   | "hamstrings"
   | "glutes"
-  | "calves"
-  | "arms"
-  | "core";
+  | "calves";
 
 export interface UserProgress {
   user_id: string;

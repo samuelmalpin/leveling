@@ -2,14 +2,15 @@ import { MuscleGroup } from "@/lib/types";
 
 export const MUSCLE_GROUPS: MuscleGroup[] = [
   "chest",
+  "biceps",
+  "triceps",
+  "abs",
   "back",
   "shoulders",
-  "quads",
+  "quadriceps",
   "hamstrings",
   "glutes",
-  "calves",
-  "arms",
-  "core"
+  "calves"
 ];
 
 export const RANKS = ["E", "D", "C", "B", "A", "S", "SS", "SSS"] as const;

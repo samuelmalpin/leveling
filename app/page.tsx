@@ -2,9 +2,11 @@ import Link from "next/link";
 import { requireUser } from "@/lib/auth/require-user";
 import { StatCard } from "@/components/features/stat-card";
 import { MuscleGrid } from "@/components/features/muscle-grid";
+import { BodyPowerAnalysisPanel } from "@/components/features/body-power-analysis-panel";
 import { DailyOpsList } from "@/components/features/daily-ops-list";
 import { MicroQuestList } from "@/components/features/micro-quest-list";
 import { RetentionPanel } from "@/components/features/retention-panel";
+import { buildBodyPowerAnalysis } from "@/lib/game/body-power";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -76,6 +78,13 @@ export default async function DashboardPage() {
   const microQuests = microQuestRes.data ?? [];
   const challengeBand = challengeStateRes.data?.difficulty_band ?? "balanced";
   const weeklyRecap = (weeklyRecapRes.data as WeeklyRecap | null) ?? null;
+  const bodyPowerAnalysis = buildBodyPowerAnalysis(
+    muscles.map((muscle) => ({
+      muscle_group: muscle.muscle_group,
+      xp_total: Number(muscle.xp_total ?? 0),
+      level: Number(muscle.level ?? 0)
+    }))
+  );
 
   return (
     <div className="space-y-6">
@@ -142,9 +151,13 @@ export default async function DashboardPage() {
             <p>Workouts: {weeklyRecap?.workouts ?? 0}</p>
             <p>Weekly Challenge Points: {weeklyRecap?.weeklyPoints ?? 0}</p>
             <p>Average Boss Score: {weeklyRecap?.avgBossScore ?? 0}</p>
-            <p>Top Muscle: {weeklyRecap?.bestMuscle ?? "core"}</p>
+            <p>Top Muscle: {weeklyRecap?.bestMuscle ?? "abs"}</p>
           </CardContent>
         </Card>
+      </section>
+
+      <section>
+        <BodyPowerAnalysisPanel analysis={bodyPowerAnalysis} />
       </section>
 
       <section>

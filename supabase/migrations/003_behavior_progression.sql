@@ -289,7 +289,7 @@ language plpgsql
 security definer
 as $$
 declare
-  boss_id uuid;
+  v_boss_id uuid;
   boss_status text;
   diff int;
   reward int;
@@ -301,7 +301,7 @@ declare
   modifier_mult numeric := 1;
 begin
   select bp.boss_id, bp.status, bp.progress_meter, b.difficulty, b.reward_xp
-  into boss_id, boss_status, current_meter, diff, reward
+  into v_boss_id, boss_status, current_meter, diff, reward
   from public.boss_progress bp
   join public.bosses b on b.id = bp.boss_id
   where bp.id = p_boss_progress_id
@@ -319,7 +319,7 @@ begin
   select bwm.modifier_name, bwm.score_multiplier
   into modifier_name, modifier_mult
   from public.boss_weekly_modifiers bwm
-  where bwm.boss_id = boss_id
+  where bwm.boss_id = v_boss_id
     and bwm.is_active = true
     and current_date between bwm.week_start and bwm.week_end
   order by bwm.week_start desc
@@ -348,7 +348,7 @@ begin
     where user_id = p_user_id;
 
     insert into public.xp_ledger(user_id, source_type, source_id, xp_amount)
-    values (p_user_id, 'boss', boss_id, reward);
+    values (p_user_id, 'boss', v_boss_id, reward);
   end if;
 
   return jsonb_build_object(

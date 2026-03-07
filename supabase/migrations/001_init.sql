@@ -187,7 +187,7 @@ begin
     return 1;
   end if;
 
-  while lvl < 200 loop
+  while lvl < 100 loop
     if lvl < 10 then
       needed := 120 + (lvl * 30);
     elsif lvl < 40 then
@@ -220,12 +220,12 @@ immutable
 as $$
   select case
     when p_level < 5 then 'E'
-    when p_level < 10 then 'D'
-    when p_level < 18 then 'C'
-    when p_level < 28 then 'B'
-    when p_level < 40 then 'A'
-    when p_level < 55 then 'S'
-    when p_level < 75 then 'SS'
+    when p_level < 15 then 'D'
+    when p_level < 30 then 'C'
+    when p_level < 50 then 'B'
+    when p_level < 70 then 'A'
+    when p_level < 80 then 'S'
+    when p_level < 90 then 'SS'
     else 'SSS'
   end;
 $$;
