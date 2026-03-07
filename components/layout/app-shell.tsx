@@ -1,10 +1,11 @@
+import type { Route } from "next";
 import Link from "next/link";
 import { ReactNode } from "react";
 import { APP_NAME } from "@/lib/constants";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 
-const navItems = [
+const navItems: Array<{ href: Route; label: string }> = [
   { href: "/", label: "Dashboard" },
   { href: "/workouts/new", label: "Log Workout" },
   { href: "/quests", label: "Quests" },
