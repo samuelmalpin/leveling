@@ -10,7 +10,7 @@ export class SquadServiceError extends Error {
   }
 }
 
-type Supabase = SupabaseClient<any, "public", any>;
+type Supabase = SupabaseClient;
 
 type SquadRow = {
   id: string;
@@ -20,14 +20,6 @@ type SquadRow = {
   owner_user_id: string;
   max_members: number;
   created_at: string;
-};
-
-type SquadMemberRow = {
-  id: string;
-  squad_id: string;
-  user_id: string;
-  role: "owner" | "member";
-  joined_at: string;
 };
 
 export type SquadMemberView = {
@@ -802,7 +794,13 @@ async function getSquadLeaderboardFallback(supabase: Supabase, limit: number): P
     })
     .slice(0, limit);
 
-  return computedRows.map(({ createdAt: _createdAt, ...entry }) => entry);
+  return computedRows.map((row) => ({
+    squadId: row.squadId,
+    squadName: row.squadName,
+    memberCount: row.memberCount,
+    squadWorldScore: row.squadWorldScore,
+    squadWeeklyChallengePoints: row.squadWeeklyChallengePoints
+  }));
 }
 
 export async function getSquadLeaderboard(params: {
