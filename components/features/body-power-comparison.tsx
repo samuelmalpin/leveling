@@ -70,6 +70,7 @@ export function BodyPowerComparison({ playerAnalysis }: { playerAnalysis: BodyPo
             bodyPowerScore={playerAnalysis.bodyPowerScore}
             showMuscleList={false}
             compact
+            enableViewToggle={false}
           />
 
           <div className="self-center rounded-md border border-border/70 px-3 py-2 text-xs font-semibold tracking-[0.14em] text-mutedForeground">
@@ -82,6 +83,7 @@ export function BodyPowerComparison({ playerAnalysis }: { playerAnalysis: BodyPo
             bodyPowerScore={friendAnalysis.analysis.bodyPowerScore}
             showMuscleList={false}
             compact
+            enableViewToggle={false}
           />
         </div>
       ) : null}

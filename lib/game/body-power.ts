@@ -87,7 +87,9 @@ export type BodyPowerAnalysis = {
   motivation: MotivationPayload;
 };
 
-type MuscleProgressSource = Pick<MuscleStat, "muscle_group" | "xp_total" | "level">;
+type MuscleProgressSource = Pick<MuscleStat, "xp_total" | "level"> & {
+  muscle_group: string;
+};
 
 const LEVEL_CAP = 100;
 const MAX_STANDARD_DEVIATION = 50;

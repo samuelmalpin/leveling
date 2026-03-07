@@ -29,3 +29,25 @@ body {
     radial-gradient(circle at top left, rgba(28, 41, 85, 0.3), transparent 38%), hsl(var(--background));
   color: hsl(var(--foreground));
 }
+
+@keyframes heatmap-glow-pulse {
+  0%,
+  100% {
+    opacity: 0.88;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.heatmap-region {
+  transform-origin: center;
+}
+
+.heatmap-region:hover {
+  opacity: 0.98;
+}
+
+.heatmap-glow {
+  animation: heatmap-glow-pulse 2.1s ease-in-out infinite;
+}
