@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { BodyPowerDiagram } from "@/components/features/body-power-diagram";
 import { type BodyPowerAnalysis, TRACKED_MUSCLES } from "@/lib/game/body-power";
 
 type BodyPowerAnalysisPanelProps = {
@@ -37,6 +38,11 @@ export function BodyPowerAnalysisPanel({ analysis }: BodyPowerAnalysisPanelProps
         </div>
 
         <div className="grid gap-4 lg:grid-cols-2">
+          <div className="space-y-2 rounded-md border border-border/70 p-3 lg:col-span-2">
+            <p className="text-xs uppercase tracking-[0.12em] text-mutedForeground">Body Diagram</p>
+            <BodyPowerDiagram bodyModel={analysis.bodyModel} />
+          </div>
+
           <div className="space-y-2 rounded-md border border-border/70 p-3">
             <p className="text-xs uppercase tracking-[0.12em] text-mutedForeground">Strongest Muscles</p>
             <div className="flex flex-wrap gap-2">

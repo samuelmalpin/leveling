@@ -90,6 +90,19 @@ type WeeklyProgressQueryRow = {
   weekly_challenges: { week_start?: string; week_end?: string } | { week_start?: string; week_end?: string }[] | null;
 };
 
+type SquadLeaderboardFallbackRow = {
+  id: string;
+  name: string;
+  created_at: string;
+  squad_members: { user_id: string } | { user_id: string }[] | null;
+};
+
+type SquadLeaderboardFallbackWeeklyRow = {
+  user_id: string;
+  points?: number;
+  weekly_challenges: { week_start?: string; week_end?: string } | { week_start?: string; week_end?: string }[] | null;
+};
+
 function asSingle<T>(value: T | T[] | null | undefined): T | null {
   if (!value) return null;
   return Array.isArray(value) ? (value[0] ?? null) : value;
@@ -674,6 +687,124 @@ export async function getSquadMembers(params: {
   };
 }
 
+function isMissingSquadLeaderboardFunction(errorMessage: string): boolean {
+  const normalizedMessage = errorMessage.toLowerCase();
+  return (
+    normalizedMessage.includes("fn_get_squad_leaderboard")
+    && (normalizedMessage.includes("schema cache") || normalizedMessage.includes("could not find the function"))
+  );
+}
+
+async function getSquadLeaderboardFallback(supabase: Supabase, limit: number): Promise<SquadLeaderboardEntry[]> {
+  const { data: squadRows, error: squadRowsError } = await supabase
+    .from("squads")
+    .select("id, name, created_at, squad_members(user_id)")
+    .order("created_at", { ascending: true });
+
+  if (squadRowsError) {
+    throw new SquadServiceError(squadRowsError.message, 400);
+  }
+
+  const typedSquadRows = (squadRows ?? []) as SquadLeaderboardFallbackRow[];
+  if (typedSquadRows.length === 0) {
+    return [];
+  }
+
+  const squadMemberUserIds = Array.from(
+    new Set(
+      typedSquadRows.flatMap((row) => {
+        const members = Array.isArray(row.squad_members) ? row.squad_members : row.squad_members ? [row.squad_members] : [];
+        return members.map((member) => member.user_id);
+      })
+    )
+  );
+
+  const progressByUserId = new Map<string, UserProgressQueryRow>();
+  if (squadMemberUserIds.length > 0) {
+    const { data: progressRows, error: progressRowsError } = await supabase
+      .from("user_progress")
+      .select("user_id, level, momentum_score")
+      .in("user_id", squadMemberUserIds);
+
+    if (progressRowsError) {
+      throw new SquadServiceError(progressRowsError.message, 400);
+    }
+
+    for (const row of (progressRows ?? []) as UserProgressQueryRow[]) {
+      progressByUserId.set(row.user_id, row);
+    }
+  }
+
+  const weeklyPointsByUserId = new Map<string, number>();
+  if (squadMemberUserIds.length > 0) {
+    const { data: weeklyRows, error: weeklyRowsError } = await supabase
+      .from("user_weekly_progress")
+      .select("user_id, points, weekly_challenges(week_start, week_end)")
+      .in("user_id", squadMemberUserIds);
+
+    if (weeklyRowsError) {
+      throw new SquadServiceError(weeklyRowsError.message, 400);
+    }
+
+    const today = new Date().toISOString().slice(0, 10);
+    for (const row of (weeklyRows ?? []) as SquadLeaderboardFallbackWeeklyRow[]) {
+      const challenge = asSingle(row.weekly_challenges) as { week_start?: string; week_end?: string } | null;
+      const isCurrentWeek = !!challenge?.week_start && !!challenge?.week_end && today >= challenge.week_start && today <= challenge.week_end;
+
+      if (!isCurrentWeek) {
+        continue;
+      }
+
+      const currentValue = weeklyPointsByUserId.get(row.user_id) ?? 0;
+      weeklyPointsByUserId.set(row.user_id, currentValue + Number(row.points ?? 0));
+    }
+  }
+
+  const computedRows = typedSquadRows
+    .map((row) => {
+      const members = Array.isArray(row.squad_members) ? row.squad_members : row.squad_members ? [row.squad_members] : [];
+      const memberIds = members.map((member) => member.user_id);
+      const memberCount = memberIds.length;
+
+      const totalWorldScore = memberIds.reduce((sum, memberId) => {
+        const progress = progressByUserId.get(memberId) ?? null;
+        const level = Number(progress?.level ?? 1);
+        const momentumScore = Number(progress?.momentum_score ?? 0);
+        return sum + level + momentumScore / 100;
+      }, 0);
+
+      const squadWorldScore = memberCount > 0 ? roundTo(totalWorldScore / memberCount, 2) : 0;
+      const squadWeeklyChallengePoints = memberIds.reduce((sum, memberId) => sum + (weeklyPointsByUserId.get(memberId) ?? 0), 0);
+
+      return {
+        squadId: row.id,
+        squadName: row.name,
+        memberCount,
+        squadWorldScore,
+        squadWeeklyChallengePoints,
+        createdAt: row.created_at
+      };
+    })
+    .sort((left, right) => {
+      if (right.squadWorldScore !== left.squadWorldScore) {
+        return right.squadWorldScore - left.squadWorldScore;
+      }
+
+      if (right.squadWeeklyChallengePoints !== left.squadWeeklyChallengePoints) {
+        return right.squadWeeklyChallengePoints - left.squadWeeklyChallengePoints;
+      }
+
+      if (right.memberCount !== left.memberCount) {
+        return right.memberCount - left.memberCount;
+      }
+
+      return left.createdAt.localeCompare(right.createdAt);
+    })
+    .slice(0, limit);
+
+  return computedRows.map(({ createdAt: _createdAt, ...entry }) => entry);
+}
+
 export async function getSquadLeaderboard(params: {
   supabase: Supabase;
   limit?: number;
@@ -685,7 +816,13 @@ export async function getSquadLeaderboard(params: {
   });
 
   if (error) {
-    throw new SquadServiceError(error.message, 400);
+    const errorMessage = error.message ?? "Unable to load squad leaderboard";
+
+    if (isMissingSquadLeaderboardFunction(errorMessage)) {
+      return getSquadLeaderboardFallback(params.supabase, limit);
+    }
+
+    throw new SquadServiceError(errorMessage, 400);
   }
 
   return (data ?? []).map((row: Record<string, unknown>) => ({
