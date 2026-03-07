@@ -3,6 +3,9 @@
 import { useMemo, useState } from "react";
 import {
   TRACKED_MUSCLES,
+  getBodyEvolutionTier,
+  getBodyPowerScore,
+  getBodySilhouetteScale,
   muscleXpRequiredForLevel,
   type BodyModel,
   type BodyMuscle,
@@ -79,8 +82,26 @@ function getMuscleFillClass(color: MuscleColor): string {
   return MUSCLE_FILL_CLASS[color];
 }
 
-export function BodyPowerDiagram({ bodyModel }: { bodyModel: BodyModel }) {
+type BodyPowerDiagramProps = {
+  bodyModel: BodyModel;
+  bodyPowerScore?: number;
+  title?: string;
+  showMuscleList?: boolean;
+  compact?: boolean;
+};
+
+export function BodyPowerDiagram({
+  bodyModel,
+  bodyPowerScore,
+  title,
+  showMuscleList = true,
+  compact = false
+}: BodyPowerDiagramProps) {
   const [hoveredMuscle, setHoveredMuscle] = useState<BodyMuscle | null>(null);
+  const resolvedBodyPowerScore = bodyPowerScore ?? getBodyPowerScore(bodyModel);
+  const bodyEvolutionTier = getBodyEvolutionTier(resolvedBodyPowerScore);
+  const silhouetteScale = getBodySilhouetteScale(resolvedBodyPowerScore);
+  const silhouetteTranslateX = 180 * (1 - silhouetteScale);
 
   const hoverState = useMemo<HoverState | null>(() => {
     if (!hoveredMuscle) {
@@ -108,70 +129,82 @@ export function BodyPowerDiagram({ bodyModel }: { bodyModel: BodyModel }) {
 
   return (
     <div className="space-y-3">
+      {title ? <p className="text-sm font-semibold">{title}</p> : null}
+
       <div className="rounded-md border border-border/70 bg-card/40 p-3" onMouseLeave={() => setHoveredMuscle(null)}>
-        <svg viewBox="0 0 360 430" className="mx-auto h-auto w-full max-w-[30rem]" role="img" aria-label="Body power diagram">
+        <svg
+          viewBox="0 0 360 430"
+          className={`mx-auto h-auto w-full ${compact ? "max-w-[22rem]" : "max-w-[30rem]"}`}
+          role="img"
+          aria-label="Body power diagram"
+        >
           <title>Body power muscle visualization</title>
 
-          <g className="fill-muted/35 stroke-border" strokeWidth="1.2">
-            <circle cx="96" cy="38" r="18" />
-            <path d="M68 64 L124 64 L140 120 L126 208 L116 356 L76 356 L66 208 L52 120 Z" />
-            <circle cx="266" cy="38" r="18" />
-            <path d="M238 64 L294 64 L310 120 L296 208 L286 356 L246 356 L236 208 L222 120 Z" />
-          </g>
+          <g transform={`translate(${silhouetteTranslateX} 0) scale(${silhouetteScale} 1)`}>
+            <g className="fill-muted/35 stroke-border" strokeWidth="1.2">
+              <circle cx="96" cy="38" r="18" />
+              <path d="M68 64 L124 64 L140 120 L126 208 L116 356 L76 356 L66 208 L52 120 Z" />
+              <circle cx="266" cy="38" r="18" />
+              <path d="M238 64 L294 64 L310 120 L296 208 L286 356 L246 356 L236 208 L222 120 Z" />
+            </g>
 
-          <g id="shoulders" className={regionClass("shoulders")} onMouseEnter={() => onRegionEnter("shoulders")}> 
-            <path d="M56 78 C62 64, 78 58, 94 64 L90 88 C78 90, 66 92, 56 98 Z" />
-            <path d="M98 64 C114 58, 130 64, 136 78 L136 98 C126 92, 114 90, 102 88 Z" />
-            <path d="M226 78 C232 64, 248 58, 264 64 L260 88 C248 90, 236 92, 226 98 Z" />
-            <path d="M268 64 C284 58, 300 64, 306 78 L306 98 C296 92, 284 90, 272 88 Z" />
-          </g>
+            <g id="shoulders" className={regionClass("shoulders")} onMouseEnter={() => onRegionEnter("shoulders")}>
+              <path d="M56 78 C62 64, 78 58, 94 64 L90 88 C78 90, 66 92, 56 98 Z" />
+              <path d="M98 64 C114 58, 130 64, 136 78 L136 98 C126 92, 114 90, 102 88 Z" />
+              <path d="M226 78 C232 64, 248 58, 264 64 L260 88 C248 90, 236 92, 226 98 Z" />
+              <path d="M268 64 C284 58, 300 64, 306 78 L306 98 C296 92, 284 90, 272 88 Z" />
+            </g>
 
-          <g id="chest" className={regionClass("chest")} onMouseEnter={() => onRegionEnter("chest")}> 
-            <path d="M76 98 L116 98 L126 138 L96 148 L66 138 Z" />
-          </g>
+            <g id="chest" className={regionClass("chest")} onMouseEnter={() => onRegionEnter("chest")}>
+              <path d="M76 98 L116 98 L126 138 L96 148 L66 138 Z" />
+            </g>
 
-          <g id="biceps" className={regionClass("biceps")} onMouseEnter={() => onRegionEnter("biceps")}> 
-            <rect x="42" y="100" width="18" height="48" rx="9" />
-            <rect x="132" y="100" width="18" height="48" rx="9" />
-          </g>
+            <g id="biceps" className={regionClass("biceps")} onMouseEnter={() => onRegionEnter("biceps")}>
+              <rect x="42" y="100" width="18" height="48" rx="9" />
+              <rect x="132" y="100" width="18" height="48" rx="9" />
+            </g>
 
-          <g id="triceps" className={regionClass("triceps")} onMouseEnter={() => onRegionEnter("triceps")}> 
-            <rect x="42" y="150" width="18" height="52" rx="9" />
-            <rect x="132" y="150" width="18" height="52" rx="9" />
-            <rect x="222" y="112" width="18" height="56" rx="9" />
-            <rect x="292" y="112" width="18" height="56" rx="9" />
-          </g>
+            <g id="triceps" className={regionClass("triceps")} onMouseEnter={() => onRegionEnter("triceps")}>
+              <rect x="42" y="150" width="18" height="52" rx="9" />
+              <rect x="132" y="150" width="18" height="52" rx="9" />
+              <rect x="222" y="112" width="18" height="56" rx="9" />
+              <rect x="292" y="112" width="18" height="56" rx="9" />
+            </g>
 
-          <g id="abs" className={regionClass("abs")} onMouseEnter={() => onRegionEnter("abs")}> 
-            <rect x="80" y="152" width="32" height="70" rx="10" />
-          </g>
+            <g id="abs" className={regionClass("abs")} onMouseEnter={() => onRegionEnter("abs")}>
+              <rect x="80" y="152" width="32" height="70" rx="10" />
+            </g>
 
-          <g id="quadriceps" className={regionClass("quadriceps")} onMouseEnter={() => onRegionEnter("quadriceps")}> 
-            <rect x="76" y="226" width="17" height="74" rx="8" />
-            <rect x="99" y="226" width="17" height="74" rx="8" />
-          </g>
+            <g id="quadriceps" className={regionClass("quadriceps")} onMouseEnter={() => onRegionEnter("quadriceps")}>
+              <rect x="76" y="226" width="17" height="74" rx="8" />
+              <rect x="99" y="226" width="17" height="74" rx="8" />
+            </g>
 
-          <g id="calves" className={regionClass("calves")} onMouseEnter={() => onRegionEnter("calves")}> 
-            <rect x="78" y="306" width="15" height="56" rx="8" />
-            <rect x="99" y="306" width="15" height="56" rx="8" />
-            <rect x="248" y="306" width="15" height="56" rx="8" />
-            <rect x="269" y="306" width="15" height="56" rx="8" />
-          </g>
+            <g id="calves" className={regionClass("calves")} onMouseEnter={() => onRegionEnter("calves")}>
+              <rect x="78" y="306" width="15" height="56" rx="8" />
+              <rect x="99" y="306" width="15" height="56" rx="8" />
+              <rect x="248" y="306" width="15" height="56" rx="8" />
+              <rect x="269" y="306" width="15" height="56" rx="8" />
+            </g>
 
-          <g id="back" className={regionClass("back")} onMouseEnter={() => onRegionEnter("back")}> 
-            <path d="M246 98 L286 98 L300 174 L266 192 L232 174 Z" />
-          </g>
+            <g id="back" className={regionClass("back")} onMouseEnter={() => onRegionEnter("back")}>
+              <path d="M246 98 L286 98 L300 174 L266 192 L232 174 Z" />
+            </g>
 
-          <g id="glutes" className={regionClass("glutes")} onMouseEnter={() => onRegionEnter("glutes")}> 
-            <ellipse cx="256" cy="222" rx="20" ry="16" />
-            <ellipse cx="276" cy="222" rx="20" ry="16" />
-          </g>
+            <g id="glutes" className={regionClass("glutes")} onMouseEnter={() => onRegionEnter("glutes")}>
+              <ellipse cx="256" cy="222" rx="20" ry="16" />
+              <ellipse cx="276" cy="222" rx="20" ry="16" />
+            </g>
 
-          <g id="hamstrings" className={regionClass("hamstrings")} onMouseEnter={() => onRegionEnter("hamstrings")}> 
-            <rect x="246" y="242" width="17" height="64" rx="8" />
-            <rect x="269" y="242" width="17" height="64" rx="8" />
+            <g id="hamstrings" className={regionClass("hamstrings")} onMouseEnter={() => onRegionEnter("hamstrings")}>
+              <rect x="246" y="242" width="17" height="64" rx="8" />
+              <rect x="269" y="242" width="17" height="64" rx="8" />
+            </g>
           </g>
         </svg>
+        <p className="mt-2 text-xs text-mutedForeground capitalize">
+          Evolution Tier: {bodyEvolutionTier} · Body Power {resolvedBodyPowerScore.toFixed(1)}
+        </p>
       </div>
 
       {hoverState ? (
@@ -192,19 +225,21 @@ export function BodyPowerDiagram({ bodyModel }: { bodyModel: BodyModel }) {
         <p className="text-xs text-mutedForeground">Hover a muscle region to view level, rank, and XP progress.</p>
       )}
 
-      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
-        {TRACKED_MUSCLES.map((muscle) => {
-          const row = bodyModel[muscle];
-          return (
-            <div key={muscle} className="rounded-md border border-border/70 px-3 py-2 text-xs">
-              <p className="font-medium">{MUSCLE_LABELS[muscle]}</p>
-              <p className="text-mutedForeground">
-                Lv {row.level} · {row.rank}
-              </p>
-            </div>
-          );
-        })}
-      </div>
+      {showMuscleList ? (
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+          {TRACKED_MUSCLES.map((muscle) => {
+            const row = bodyModel[muscle];
+            return (
+              <div key={muscle} className="rounded-md border border-border/70 px-3 py-2 text-xs">
+                <p className="font-medium">{MUSCLE_LABELS[muscle]}</p>
+                <p className="text-mutedForeground">
+                  Lv {row.level} · {row.rank}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
     </div>
   );
 }

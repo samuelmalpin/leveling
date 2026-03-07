@@ -162,6 +162,8 @@ API routes:
 - `GET /api/retention/state`
 - `POST /api/achievement-chains/:userChainProgressId/claim`
 - `POST /api/recovery-quests/claim`
+- `GET /api/body-power/analysis`
+- `POST /api/body-power/compare`
 
 ## Frontend Pages
 

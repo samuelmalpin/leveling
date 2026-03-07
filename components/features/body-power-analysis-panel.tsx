@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BodyPowerDiagram } from "@/components/features/body-power-diagram";
+import { BodyPowerComparison } from "@/components/features/body-power-comparison";
 import { type BodyPowerAnalysis, TRACKED_MUSCLES } from "@/lib/game/body-power";
 
 type BodyPowerAnalysisPanelProps = {
@@ -33,14 +34,15 @@ export function BodyPowerAnalysisPanel({ analysis }: BodyPowerAnalysisPanelProps
           </div>
           <div className="rounded-md border border-border/70 p-3">
             <p className="text-xs text-mutedForeground">Evolution</p>
-            <p className="font-semibold">{analysis.bodyEvolutionStage}</p>
+            <p className="font-semibold capitalize">{analysis.bodyEvolutionTier}</p>
+            <p className="text-xs text-mutedForeground">{analysis.bodyEvolutionStage}</p>
           </div>
         </div>
 
         <div className="grid gap-4 lg:grid-cols-2">
           <div className="space-y-2 rounded-md border border-border/70 p-3 lg:col-span-2">
             <p className="text-xs uppercase tracking-[0.12em] text-mutedForeground">Body Diagram</p>
-            <BodyPowerDiagram bodyModel={analysis.bodyModel} />
+            <BodyPowerDiagram bodyModel={analysis.bodyModel} bodyPowerScore={analysis.bodyPowerScore} />
           </div>
 
           <div className="space-y-2 rounded-md border border-border/70 p-3">
@@ -51,7 +53,7 @@ export function BodyPowerAnalysisPanel({ analysis }: BodyPowerAnalysisPanelProps
               ) : (
                 analysis.strongestMuscles.map((muscle) => (
                   <Badge key={`strong-${muscle.muscle}`} variant="secondary">
-                    {muscle.muscle} · Lv {muscle.level}
+                    {muscle.muscle} · Rank {analysis.bodyModel[muscle.muscle].rank}
                   </Badge>
                 ))
               )}
@@ -66,7 +68,7 @@ export function BodyPowerAnalysisPanel({ analysis }: BodyPowerAnalysisPanelProps
               ) : (
                 analysis.weakestMuscles.map((muscle) => (
                   <Badge key={`weak-${muscle.muscle}`} variant="outline">
-                    {muscle.muscle} · -{muscle.gapFromStrongest}
+                    {muscle.muscle} · Rank {analysis.bodyModel[muscle.muscle].rank}
                   </Badge>
                 ))
               )}
@@ -114,6 +116,8 @@ export function BodyPowerAnalysisPanel({ analysis }: BodyPowerAnalysisPanelProps
           </p>
           <p className="text-mutedForeground">{analysis.motivation.progressFeedback}</p>
         </div>
+
+        <BodyPowerComparison playerAnalysis={analysis} />
       </CardContent>
     </Card>
   );

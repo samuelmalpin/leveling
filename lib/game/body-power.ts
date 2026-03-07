@@ -44,6 +44,8 @@ export type BodyEvolutionStage =
   | "Elite"
   | "Legendary Physique";
 
+export type BodyEvolutionTier = "skinny" | "fit" | "athletic" | "muscular" | "elite" | "titan";
+
 export type SymmetryRank = "Poor" | "Weak" | "Average" | "Balanced" | "Elite" | "Perfect Physique";
 
 export type BodyModelMuscle = {
@@ -81,6 +83,7 @@ export type BodyPowerAnalysis = {
   recommendedTraining: string[];
   auraEffect: AuraEffect;
   bodyEvolutionStage: BodyEvolutionStage;
+  bodyEvolutionTier: BodyEvolutionTier;
   motivation: MotivationPayload;
 };
 
@@ -261,6 +264,23 @@ export function getBodyEvolutionStage(bodyPowerScore: number): BodyEvolutionStag
   return "Legendary Physique";
 }
 
+export function getBodyEvolutionTier(bodyPowerScore: number): BodyEvolutionTier {
+  const score = clamp(roundTo(bodyPowerScore), 0, 100);
+
+  if (score >= 100) return "titan";
+  if (score >= 80) return "elite";
+  if (score >= 60) return "muscular";
+  if (score >= 40) return "athletic";
+  if (score >= 20) return "fit";
+  return "skinny";
+}
+
+export function getBodySilhouetteScale(bodyPowerScore: number): number {
+  const score = clamp(roundTo(bodyPowerScore), 0, 100);
+  const normalized = score / 100;
+  return roundTo(0.86 + normalized * 0.34, 3);
+}
+
 export function analyzeMuscleBalance(bodyModel: BodyModel): {
   strongestMuscles: MuscleAnalysisItem[];
   weakestMuscles: MuscleAnalysisItem[];
@@ -357,6 +377,7 @@ export function buildBodyPowerAnalysis(muscleRows: MuscleProgressSource[]): Body
     recommendedTraining,
     auraEffect: getAuraEffect(bodyPowerRank),
     bodyEvolutionStage: getBodyEvolutionStage(bodyPowerScore),
+    bodyEvolutionTier: getBodyEvolutionTier(bodyPowerScore),
     motivation
   };
 }
