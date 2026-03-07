@@ -101,9 +101,10 @@ SUPABASE_SERVICE_ROLE_KEY=...
 - Then run `supabase/migrations/002_growth_loops.sql`.
 - Then run `supabase/migrations/003_behavior_progression.sql`.
 - Then run `supabase/migrations/004_retention_engine.sql`.
+- Then run `supabase/migrations/005_authenticated_grants.sql`.
+- Then run `supabase/migrations/009_squad_management_extension.sql`.
 
 This migration includes:
-
 - All core relational tables
 - Indexing strategy for fast lookups
 - RLS policies
@@ -151,6 +152,11 @@ API routes:
 - `GET /api/share-cards`
 - `POST /api/squads/create`
 - `POST /api/squads/join`
+- `POST /api/squads/leave`
+- `POST /api/squads/invite`
+- `POST /api/squads/remove`
+- `GET /api/squads/members`
+- `GET /api/squads/leaderboard`
 - `POST /api/micro-quests/:userMicroQuestId/claim`
 - `GET /api/retention/weekly-recap`
 - `GET /api/retention/state`
@@ -165,6 +171,10 @@ API routes:
 - `Quests` (`app/quests/page.tsx`): quest progress and reward claiming.
 - `Bosses` (`app/bosses/page.tsx`): challenge progression and attempts.
 - `Social` (`app/social/page.tsx`): leaderboard and squad controls.
+- `Squads` (`app/squads/page.tsx`): squad info, member management, invite flow, and squad gameplay stats.
+- `Squad Create` (`app/squads/create/page.tsx`): create squad workflow.
+- `Squad Join` (`app/squads/join/page.tsx`): join squad by invite code.
+- `Squad Leaderboard` (`app/squads/leaderboard/page.tsx`): cross-squad ranking.
 - `Login / Signup` (`app/login`, `app/signup`): Supabase auth flows.
 
 ## Example Components
@@ -179,6 +189,10 @@ API routes:
 - `AchievementChainList`: long-horizon consistency chain progression and claims.
 - `ShareStudio`: generation of power/muscle/achievement share cards.
 - `LeaderboardTable`: social competition ranking widget.
+- `SquadCard`: squad identity and core stats.
+- `MemberList`: member roster, owner moderation, and leave flow.
+- `InvitePlayerModal`: owner invitation tool.
+- `SquadLeaderboardTable`: squad ranking widget.
 - `RetentionPanel`: phase-aware burnout and variety guidance.
 
 ## Run Locally

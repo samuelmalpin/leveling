@@ -10,6 +10,8 @@ const navItems = [
   { href: "/quests", label: "Quests" },
   { href: "/bosses", label: "Bosses" },
   { href: "/social", label: "Social" },
+  { href: "/squads", label: "Squads" },
+  { href: "/squads/leaderboard", label: "Squad Ladder" },
   { href: "/profile", label: "Profile" }
 ];
 

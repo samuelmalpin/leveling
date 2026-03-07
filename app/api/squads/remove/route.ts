@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient as createServer } from "@/lib/supabase/server";
-import { joinSquad, SquadServiceError } from "@/lib/game/squad-service";
+import { removePlayer, SquadServiceError } from "@/lib/game/squad-service";
 
 const schema = z.object({
-  inviteCode: z.string().min(4).max(16)
+  userId: z.string().uuid()
 });
 
 export async function POST(request: Request) {
@@ -23,18 +23,18 @@ export async function POST(request: Request) {
   }
 
   try {
-    const squad = await joinSquad({
+    await removePlayer({
       supabase,
-      user,
-      inviteCode: parsed.data.inviteCode
+      ownerUserId: user.id,
+      targetUserId: parsed.data.userId
     });
 
-    return NextResponse.json({ ok: true, squad });
+    return NextResponse.json({ ok: true });
   } catch (error) {
     if (error instanceof SquadServiceError) {
       return NextResponse.json({ error: error.message }, { status: error.status });
     }
 
-    return NextResponse.json({ error: "Unable to join squad" }, { status: 500 });
+    return NextResponse.json({ error: "Unable to remove player" }, { status: 500 });
   }
 }
