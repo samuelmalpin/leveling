@@ -66,6 +66,7 @@ leveling/
 			002_growth_loops.sql
 			003_behavior_progression.sql
 			004_retention_engine.sql
+			005_realistic_muscle_progression.sql
 	.env.example
 	.eslintrc.json
 	middleware.ts
@@ -101,6 +102,7 @@ SUPABASE_SERVICE_ROLE_KEY=...
 - Then run `supabase/migrations/002_growth_loops.sql`.
 - Then run `supabase/migrations/003_behavior_progression.sql`.
 - Then run `supabase/migrations/004_retention_engine.sql`.
+- Then run `supabase/migrations/005_realistic_muscle_progression.sql`.
 
 This migration includes:
 
@@ -116,6 +118,8 @@ This migration includes:
 - Micro quest assignment and claim RPC
 - Burnout prevention and retention-state scoring (phase, risk, variety, advice)
 - Achievement chains for 7/21/60/120 workout consistency milestones
+- Realistic muscle progression model with recovery windows, plateaus, overload index
+- Bodyweight-relative muscle ranks (E to SS) using estimated 1RM ratio
 
 ## Backend Logic
 
@@ -156,6 +160,16 @@ API routes:
 - `GET /api/retention/state`
 - `POST /api/achievement-chains/:userChainProgressId/claim`
 - `POST /api/recovery-quests/claim`
+- `POST /api/profile/bodyweight`
+
+### Realistic Muscle Progression Model
+
+- **Progressive overload**: each muscle computes `overloadPct = (session_e1rm - recent_e1rm) / recent_e1rm`.
+- **Recovery and fatigue**: XP multipliers are reduced if the muscle is retrained within 24-48h.
+- **Frequency cap**: training the same muscle 4+ times within 7 days applies heavy XP dampening.
+- **Plateau logic**: low overload with high frequency increases `plateau_score`, reducing growth efficiency.
+- **Deload bonus**: long recovery after high fatigue gives a temporary XP boost.
+- **Rank realism**: rank uses `strength_ratio = best_e1rm_kg / bodyweight_kg`, then maps to `E, D, C, B, A, S, SS`.
 
 ## Frontend Pages
 

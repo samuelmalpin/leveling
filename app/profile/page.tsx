@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { InventoryList } from "@/components/features/inventory-list";
 import { ShareStudio } from "@/components/features/share-studio";
+import { BodyweightForm } from "@/components/features/bodyweight-form";
 
 type AchievementRow = {
   id: string;
@@ -62,6 +63,8 @@ export default async function ProfilePage() {
           <p>Level: {progress?.level ?? 1}</p>
           <p>Total XP: {progress?.xp_total ?? 0}</p>
           <p>Streak: {progress?.streak_days ?? 0} days</p>
+          <p>Bodyweight: {Number(profile?.bodyweight_kg ?? 75).toFixed(1)} kg</p>
+          <BodyweightForm initialKg={Number(profile?.bodyweight_kg ?? 75)} />
         </CardContent>
       </Card>
 

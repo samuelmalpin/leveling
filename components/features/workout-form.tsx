@@ -25,8 +25,19 @@ interface WorkoutRewards {
   challengeBand?: string;
   completedChains?: number;
   retention?: { burnoutRisk?: number; varietyScore?: number; advice?: string };
+  muscleSummary?: Array<{
+    muscle: string;
+    xp: number;
+    fatigue: number;
+    overloadPct: number;
+    plateau: number;
+    ratio: number;
+    rank: string;
+  }>;
   loot?: { awarded?: boolean; itemName?: string; rarity?: string; quantity?: number };
 }
+
+type MuscleSummaryRow = NonNullable<WorkoutRewards["muscleSummary"]>[number];
 
 export function WorkoutForm() {
   const router = useRouter();
@@ -99,6 +110,16 @@ export function WorkoutForm() {
               <p>Variety Score: {Number(victory.retention.varietyScore ?? 0).toFixed(1)}%</p>
             ) : null}
             {victory.retention?.advice ? <p>Coach Advice: {victory.retention.advice}</p> : null}
+            {victory.muscleSummary && victory.muscleSummary.length > 0 ? (
+              <div className="rounded-md border border-border/70 p-2 text-xs text-mutedForeground">
+                <p className="mb-1 font-medium text-foreground">Muscle Adaptation</p>
+                {victory.muscleSummary.slice(0, 3).map((row: MuscleSummaryRow) => (
+                  <p key={row.muscle}>
+                    {row.muscle}: +{row.xp} XP | fatigue {row.fatigue.toFixed(1)}% | overload {row.overloadPct.toFixed(1)}% | {row.rank}
+                  </p>
+                ))}
+              </div>
+            ) : null}
             <p>{victory.leveledUp ? "Level Up Unlocked" : "Progress Recorded"}</p>
             {victory.loot?.awarded ? (
               <p>

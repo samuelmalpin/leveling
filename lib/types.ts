@@ -27,6 +27,14 @@ export interface MuscleStat {
   rank: string;
   fatigue_score: number;
   last_trained_at: string | null;
+  recovery_ready_at?: string | null;
+  plateau_score?: number;
+  adaptation_score?: number;
+  frequency_7d?: number;
+  overload_index?: number;
+  strength_ratio?: number;
+  best_e1rm_kg?: number;
+  recent_e1rm_kg?: number;
 }
 
 export interface QuestProgress {
